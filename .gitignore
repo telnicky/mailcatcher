@@ -6,5 +6,7 @@
 /doc
 /public/assets
 
+messages.db
+
 # Build gems
 *.gem

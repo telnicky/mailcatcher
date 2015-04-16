@@ -19,6 +19,7 @@ module MailCatcher::Mail extend self
             created_at DATETIME DEFAULT CURRENT_DATETIME
           )
         SQL
+
         db.execute(<<-SQL)
           CREATE TABLE IF NOT EXISTS message_part (
             id INTEGER PRIMARY KEY ASC,
@@ -30,8 +31,22 @@ module MailCatcher::Mail extend self
             charset TEXT,
             body BLOB,
             size INTEGER,
-            created_at DATETIME DEFAULT CURRENT_DATETIME
+            created_at DATETIME DEFAULT CURRENT_DATETIME,
+            FOREIGN KEY(message_id) REFERENCES message(id) ON DELETE CASCADE
           )
+        SQL
+
+        db.execute(<<-SQL)
+          CREATE TRIGGER IF NOT EXISTS max_message_count
+            BEFORE INSERT ON message
+            WHEN (SELECT COUNT(*) FROM message) >= 100
+            BEGIN
+              DELETE FROM message WHERE id IN (SELECT id FROM message ORDER BY created_at ASC LIMIT 1);
+            END
+        SQL
+
+        db.execute(<<-SQL)
+          PRAGMA foreign_keys = ON
         SQL
       end
     end
@@ -154,7 +169,6 @@ module MailCatcher::Mail extend self
   def delete_message!(message_id)
     @delete_messages_query ||= db.prepare "DELETE FROM message WHERE id = ?"
     @delete_message_parts_query ||= db.prepare "DELETE FROM message_part WHERE message_id = ?"
-    @delete_messages_query.execute(message_id) and
-    @delete_message_parts_query.execute(message_id)
+    @delete_messages_query.execute(message_id)
   end
 end

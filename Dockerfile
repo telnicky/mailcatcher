@@ -1,5 +1,5 @@
 FROM ubuntu:trusty
-MAINTAINER Paul Bowsher <paul.bowsher@gmail.com>
+MAINTAINER Travis Elnicky telnicky@instructure.com
 
 RUN apt-get update && apt-get install -y -q \
     build-essential \
@@ -13,11 +13,9 @@ RUN apt-get update && apt-get install -y -q \
  && rm -r /var/lib/apt/lists/* \
  && gem install bundler --no-ri --no-rdoc
 
-ADD . /app
-WORKDIR /app
-
+RUN git clone https://github.com/telnicky/mailcatcher.git
+WORKDIR mailcatcher
 RUN bundle install
-RUN bundle exec rake assets
 
 EXPOSE 1025
 EXPOSE 1080
